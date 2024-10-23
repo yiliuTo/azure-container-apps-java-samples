@@ -1,5 +1,6 @@
-# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# This workflow will clone and build another Java project with Maven, and build and push Docker images to the GitHubs container registry
 # For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+# https://docs.github.com/actions/use-cases-and-examples/publishing-packages/publishing-docker-images
 
 name: Publish Petclinic images
 
@@ -36,6 +37,7 @@ jobs:
           distribution: 'temurin'
           cache: maven
       - name: Clone source repo
+        # Refer to https://github.com/actions/checkout/issues/24#issuecomment-1234831235 to check out another repository
         run: |
           git config --global url.https://github.com/.insteadOf git://github.com/
           git clone https://github.com/spring-petclinic/spring-petclinic-microservices.git
