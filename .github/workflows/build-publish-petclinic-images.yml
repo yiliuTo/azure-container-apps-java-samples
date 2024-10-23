@@ -1,0 +1,143 @@
+# This workflow will clone and build another Java project with Maven, and build and push Docker images to the GitHubs container registry
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+# https://docs.github.com/actions/use-cases-and-examples/publishing-packages/publishing-docker-images
+
+name: Publish Petclinic images
+
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+    working-directory: spring-petclinic-microservices
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}
+  CUSTOMERS_SERVICE: spring-petclinic-customers-service
+  VETS_SERVICE: spring-petclinic-vets-service
+  VISITS_SERVICE: spring-petclinic-visits-service
+  API_GATEWAY: spring-petclinic-api-gateway
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Clone source repo
+        # Refer to https://github.com/actions/checkout/issues/24#issuecomment-1234831235 to check out another repository
+        run: |
+          git config --global url.https://github.com/.insteadOf git://github.com/
+          git clone https://github.com/spring-petclinic/spring-petclinic-microservices.git
+      - name: Build with Maven
+        run: |
+          cd spring-petclinic-microservices
+          mvn -B clean package --file pom.xml -DskipTests
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata (tags, labels) for customers-service
+        id: meta-customers
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ env.CUSTOMERS_SERVICE }}
+      - name: Build and push customers-service image
+        id: push-customers
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: spring-petclinic-microservices/
+          file: spring-petclinic-microservices/docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta-customers.outputs.tags }}
+          build-args: ARTIFACT_NAME=${{ env.CUSTOMERS_SERVICE }}
+      - name: Generate artifact attestation for customers-service
+        id: attest-customers
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ env.CUSTOMERS_SERVICE }}
+          subject-digest: ${{ steps.push-customers.outputs.digest }}
+          push-to-registry: true
+      - name: Extract metadata (tags, labels) for vets-service
+        id: meta-vets
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ env.VETS_SERVICE }}
+      - name: Build and push vets-service image
+        id: push-vets
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: spring-petclinic-microservices/
+          file: spring-petclinic-microservices/docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta-vets.outputs.tags }}
+          build-args: ARTIFACT_NAME=${{ env.VETS_SERVICE }}
+      - name: Generate artifact attestation for vets-service
+        id: attest-vets
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ env.VETS_SERVICE }}
+          subject-digest: ${{ steps.push-vets.outputs.digest }}
+          push-to-registry: true
+      - name: Extract metadata (tags, labels) for visits-service
+        id: meta-visits
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ env.VISITS_SERVICE }}
+      - name: Build and push visits-service image
+        id: push-visits
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: spring-petclinic-microservices/
+          file: spring-petclinic-microservices/docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta-visits.outputs.tags }}
+          build-args: ARTIFACT_NAME=${{ env.VISITS_SERVICE }}
+      - name: Generate artifact attestation for visits-service
+        id: attest-visits
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ env.VISITS_SERVICE }}
+          subject-digest: ${{ steps.push-visits.outputs.digest }}
+          push-to-registry: true
+      - name: Extract metadata (tags, labels) for api-gateway
+        id: meta-api
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ env.API_GATEWAY }}
+      - name: Build and push api-gateway image
+        id: push-api
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: spring-petclinic-microservices/
+          file: spring-petclinic-microservices/docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta-api.outputs.tags }}
+          build-args: |
+            ARTIFACT_NAME=${{ env.API_GATEWAY }}    
+            EXPOSED_PORT=8080
+      - name: Generate artifact attestation for api-gateway
+        id: attest-api
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ env.API_GATEWAY }}
+          subject-digest: ${{ steps.push-api.outputs.digest }}
+          push-to-registry: true
