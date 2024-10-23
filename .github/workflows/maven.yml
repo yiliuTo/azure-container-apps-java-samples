@@ -5,7 +5,6 @@ name: Publish Petclinic images
 
 on:
   push:
-    branches: [ * ]
     path: [ spring-petclinic-microservices/** ]
   workflow_dispatch:
 
