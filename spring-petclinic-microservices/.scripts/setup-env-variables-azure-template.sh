@@ -15,14 +15,6 @@ export VETS_SERVICE=vets-service
 export VISITS_SERVICE=visits-service
 export API_GATEWAY=api-gateway
 
-
-# ==== JARS ====
-springboot_version=3.2.7
-export CUSTOMERS_SERVICE_JAR=spring-petclinic-customers-service/target/spring-petclinic-customers-service-${springboot_version}.jar
-export VETS_SERVICE_JAR=spring-petclinic-vets-service/target/spring-petclinic-vets-service-${springboot_version}.jar
-export VISITS_SERVICE_JAR=spring-petclinic-visits-service/target/spring-petclinic-visits-service-${springboot_version}.jar
-export API_GATEWAY_JAR=spring-petclinic-api-gateway/target/spring-petclinic-api-gateway-${springboot_version}.jar
-
 # ==== MYSQL INFO ====
 export MYSQL_SERVER_NAME=mysql-petclinic-pwl # customize this
 export MYSQL_SERVER_FULL_NAME=${MYSQL_SERVER_NAME}.mysql.database.azure.com
