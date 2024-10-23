@@ -8,9 +8,8 @@ on:
   workflow_dispatch:
     input:
       petclinic_repo_url:
-        description: 'Target Petclinic repository url'
-        required: true
-        default: 'https://github.com/spring-petclinic/spring-petclinic-microservices.git'
+        description: "Target Petclinic repository url"
+        default: "https://github.com/spring-petclinic/spring-petclinic-microservices.git"
 
 defaults:
   run:
