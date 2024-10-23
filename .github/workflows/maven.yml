@@ -15,7 +15,7 @@ defaults:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository }}
+  IMAGE_PREFIX: ${{ github.repository_owner }}
   CUSTOMERS_SERVICE: spring-petclinic-customers-service
   VETS_SERVICE: spring-petclinic-vets-service
   VISITS_SERVICE: spring-petclinic-visits-service
@@ -66,3 +66,50 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           build-args: ARTIFACT_NAME=${{ env.CUSTOMERS_SERVICE }}
+      - name: Extract metadata (tags, labels) for vets-service
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ env.VETS_SERVICE }}
+      - name: Build and push vets-service image
+        id: push
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: spring-petclinic-microservices/
+          path: spring-petclinic-microservices/docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: ARTIFACT_NAME=${{ env.VETS_SERVICE }}
+      - name: Extract metadata (tags, labels) for visits-service
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ env.VISITS_SERVICE }}
+      - name: Build and push visits-service image
+        id: push
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: spring-petclinic-microservices/
+          path: spring-petclinic-microservices/docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: ARTIFACT_NAME=${{ env.VISITS_SERVICE }}
+      - name: Extract metadata (tags, labels) for api-gateway
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ env.API_GATEWAY }}
+      - name: Build and push visits-service image
+        id: push
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: spring-petclinic-microservices/
+          path: spring-petclinic-microservices/docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            ARTIFACT_NAME=${{ env.API_GATEWAY }}    
+            EXPOSED_PORT=8080
