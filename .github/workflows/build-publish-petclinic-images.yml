@@ -6,7 +6,7 @@ name: Publish Petclinic images
 
 on:
   workflow_dispatch:
-    input:
+    inputs:
       petclinic_repo_url:
         description: 'Target Petclinic repository url'
         required: true
