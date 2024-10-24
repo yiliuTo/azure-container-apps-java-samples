@@ -6,6 +6,11 @@ name: Publish Petclinic images
 
 on:
   workflow_dispatch:
+    inputs:
+      petclinic_repo_url:
+        description: 'The repository url of Spring Petclinic microservices'
+        required: true
+        default: 'https://github.com/spring-petclinic/spring-petclinic-microservices.git'
 
 defaults:
   run:
@@ -40,7 +45,7 @@ jobs:
         # Refer to https://github.com/actions/checkout/issues/24#issuecomment-1234831235 to check out another repository
         run: |
           git config --global url.https://github.com/.insteadOf git://github.com/
-          git clone https://github.com/spring-petclinic/spring-petclinic-microservices.git
+          git clone ${{ inputs.petclinic_repo_url }}
       - name: Build with Maven
         run: |
           cd spring-petclinic-microservices
