@@ -6,11 +6,6 @@ name: Publish SpringBatch Football images
 
 on:
   workflow_dispatch:
-    inputs:
-      petclinic_repo_url:
-        description: 'The repository url of Spring Petclinic microservices'
-        required: true
-        default: 'https://github.com/spring-petclinic/spring-petclinic-microservices.git'
 
 defaults:
   run:
@@ -45,7 +40,7 @@ jobs:
           git clone https://github.com/Azure-Samples/azure-container-apps-java-samples.git
       - name: Build with Maven
         run: |
-          cd spring-batch-football
+          cat Dockerfile
           mvn -B clean package --file pom.xml -DskipTests
       - name: Log in to the Container registry
         uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
