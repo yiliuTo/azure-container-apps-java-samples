@@ -1,0 +1,77 @@
+# This workflow will clone and build another Java project with Maven, and build and push Docker images to the GitHubs container registry
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+# https://docs.github.com/actions/use-cases-and-examples/publishing-packages/publishing-docker-images
+
+name: Publish SpringBatch Football images
+
+on:
+  workflow_dispatch:
+    inputs:
+      petclinic_repo_url:
+        description: 'The repository url of Spring Petclinic microservices'
+        required: true
+        default: 'https://github.com/spring-petclinic/spring-petclinic-microservices.git'
+
+defaults:
+  run:
+    shell: bash
+    working-directory: spring-batch-football
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}
+  IMAGE_NAME: spring-batch-football
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      - name: Clone source repo
+        # Refer to https://github.com/actions/checkout/issues/24#issuecomment-1234831235 to check out another repository
+        run: |
+          git config --global url.https://github.com/.insteadOf git://github.com/
+          git clone https://github.com/Azure-Samples/azure-container-apps-java-samples.git
+      - name: Build with Maven
+        run: |
+          cd spring-batch-football
+          mvn -B clean package --file pom.xml -DskipTests
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata (tags, labels)
+        id: meta-image
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ env.IMAGE_NAME }}
+      - name: Build and push image
+        id: push-image
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
+        with:
+          context: spring-batch-football/
+          file: spring-batch-football/Dockerfile
+          push: true
+          tags: ${{ steps.meta-image.outputs.tags }}
+          build-args: ARTIFACT_NAME=${{ env.IMAGE_NAME }}
+      - name: Generate artifact attestation
+        id: attest-image
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.push-image.outputs.digest }}
+          push-to-registry: true
